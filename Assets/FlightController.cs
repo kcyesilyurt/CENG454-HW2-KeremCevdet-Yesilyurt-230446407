@@ -37,7 +37,11 @@ public class PlayerController : MonoBehaviour
 
         if (Input.GetKey(KeyCode.Space))
         {
-            transform.Translate(Vector3.forward * speed * Time.deltaTime);
+        rb.linearVelocity = transform.forward * speed;
+        }
+        else
+        {
+        rb.linearVelocity = Vector3.zero;
         }
     }
 }
