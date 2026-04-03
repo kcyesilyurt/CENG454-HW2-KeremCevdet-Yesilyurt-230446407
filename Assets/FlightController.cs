@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class PlayerController : MonoBehaviour
+public class FlightController : MonoBehaviour
 {
     public float speed = 9f;
     public float rotationSpeed = 100f;
