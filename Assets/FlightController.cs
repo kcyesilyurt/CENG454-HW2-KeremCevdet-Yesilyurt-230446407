@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class PlayerController : MonoBehaviour
+public class FlightController : MonoBehaviour
 {
     public float speed = 9f;
     public float rotationSpeed = 100f;
@@ -37,7 +37,11 @@ public class PlayerController : MonoBehaviour
 
         if (Input.GetKey(KeyCode.Space))
         {
-            transform.Translate(Vector3.forward * speed * Time.deltaTime);
+        rb.linearVelocity = transform.forward * speed;
+        }
+        else
+        {
+        rb.linearVelocity = Vector3.zero;
         }
     }
 }
