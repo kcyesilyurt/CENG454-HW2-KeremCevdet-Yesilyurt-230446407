@@ -1,3 +1,4 @@
+//MissileHoming.cs
 using UnityEngine;
 
 public class MissileHoming : MonoBehaviour
@@ -12,7 +13,7 @@ public class MissileHoming : MonoBehaviour
         target = newTarget;
     }
 
-    private void Update()
+    void Update()
     {
         if (target == null) return;
 

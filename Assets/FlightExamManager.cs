@@ -1,3 +1,4 @@
+//FlightExamManager.cs
 using UnityEngine;
 using TMPro;
 
@@ -36,5 +37,10 @@ public class FlightExamManager : MonoBehaviour
 
         if (statusText != null)
             statusText.text = "Safe Zone";
+    }
+    public void FailThreatPhase()
+    {
+        threatCleared = false;
+        statusText.text = "Missile Hit!";
     }
 }
