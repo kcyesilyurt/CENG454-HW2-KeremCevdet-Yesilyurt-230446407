@@ -5,23 +5,68 @@ using System.Collections;
 
 public class FlightExamManager : MonoBehaviour
 {
+    private enum ExamState
+    {
+        WaitingForTakeoff,
+        ReadyForDangerZone,
+        DangerZoneCountdown,
+        MissileActive,
+        ThreatCleared,
+        MissionComplete
+    }
+
     [SerializeField] private TMP_Text statusText;
     [SerializeField] private TMP_Text missionText;
 
-    private bool hasTakenOff = false;
-    private bool hasEnteredDangerZone = false;
-    private bool threatCleared = false;
-    private bool missionComplete = false;
-
+    private ExamState currentState = ExamState.WaitingForTakeoff;
     private Coroutine statusRoutine;
+
+    public bool IsPlayerInDangerZone { get; private set; }
 
     private void Start()
     {
         if (statusText != null)
             statusText.text = "";
 
-        if (missionText != null)
-            missionText.text = "Take off, survive the danger zone, then land safely.";
+        UpdateMissionText();
+    }
+
+    private void SetState(ExamState newState)
+    {
+        currentState = newState;
+        UpdateMissionText();
+    }
+
+    private void UpdateMissionText()
+    {
+        if (missionText == null) return;
+
+        switch (currentState)
+        {
+            case ExamState.WaitingForTakeoff:
+                missionText.text = "Take off first.";
+                break;
+
+            case ExamState.ReadyForDangerZone:
+                missionText.text = "Enter the danger zone.";
+                break;
+
+            case ExamState.DangerZoneCountdown:
+                missionText.text = "Missile countdown active. Stay alert.";
+                break;
+
+            case ExamState.MissileActive:
+                missionText.text = "Missile active. Escape the danger zone.";
+                break;
+
+            case ExamState.ThreatCleared:
+                missionText.text = "Threat cleared. Land safely.";
+                break;
+
+            case ExamState.MissionComplete:
+                missionText.text = "Successful landing completed.";
+                break;
+        }
     }
 
     private void SetStatusMessage(string message)
@@ -62,75 +107,94 @@ public class FlightExamManager : MonoBehaviour
 
     public void RegisterTakeoff()
     {
-        hasTakenOff = true;
+        if (currentState != ExamState.WaitingForTakeoff) return;
 
-        if (missionText != null)
-            missionText.text = "Enter the danger zone.";
+        SetState(ExamState.ReadyForDangerZone);
+        SetTemporaryStatusMessage("Takeoff registered.", 2f);
     }
 
-    public void EnterDangerZone()
+    public bool EnterDangerZone()
     {
-        hasEnteredDangerZone = true;
-        threatCleared = false;
+        if (currentState != ExamState.ReadyForDangerZone) return false;
 
-        SetStatusMessage("Entered a Dangerous Zone!");
-
-        if (missionText != null)
-            missionText.text = "Survive the missile threat and escape.";
+        IsPlayerInDangerZone = true;
+        SetState(ExamState.DangerZoneCountdown);
+        SetStatusMessage("Entered Dangerous Zone!");
+        return true;
     }
 
-    public void ShowMissileLaunched()
+    public bool CanLaunchMissile()
     {
-        SetStatusMessage("Missile Launched!");
+        return currentState == ExamState.DangerZoneCountdown && IsPlayerInDangerZone;
+    }
+
+    public void NotifyMissileLaunched()
+    {
+        if (!CanLaunchMissile()) return;
+
+        SetState(ExamState.MissileActive);
+        SetStatusMessage("Missile launched!");
     }
 
     public void ExitDangerZone()
     {
-        threatCleared = true;
+        if (!IsPlayerInDangerZone) return;
 
-        SetTemporaryStatusMessage("Safe Zone", 5f);
+        IsPlayerInDangerZone = false;
 
-        if (missionText != null)
-            missionText.text = "Threat cleared. Land safely.";
+        if (currentState == ExamState.DangerZoneCountdown)
+        {
+            SetState(ExamState.ReadyForDangerZone);
+            SetTemporaryStatusMessage("Exited too early. Re-enter the danger zone.", 3f);
+            return;
+        }
+
+        if (currentState == ExamState.MissileActive)
+        {
+            SetState(ExamState.ThreatCleared);
+            SetTemporaryStatusMessage("Safe zone reached.", 5f);
+        }
     }
 
     public void FailThreatPhase()
     {
-        threatCleared = false;
+        IsPlayerInDangerZone = false;
 
-        SetStatusMessage("Missile Hit!");
+        if (currentState != ExamState.DangerZoneCountdown &&
+            currentState != ExamState.MissileActive)
+        {
+            return;
+        }
 
-        if (missionText != null)
-            missionText.text = "Return and try again.";
+        SetState(ExamState.ReadyForDangerZone);
+        SetStatusMessage("Missile hit! Return and try again.");
     }
 
     public void TryCompleteLanding()
     {
-        if (missionComplete) return;
+        if (currentState == ExamState.MissionComplete) return;
 
-        if (!hasTakenOff)
+        if (currentState == ExamState.WaitingForTakeoff)
         {
             SetTemporaryStatusMessage("Take off first.", 3f);
             return;
         }
 
-        if (!hasEnteredDangerZone)
+        if (currentState == ExamState.ReadyForDangerZone ||
+            currentState == ExamState.DangerZoneCountdown ||
+            currentState == ExamState.MissileActive)
         {
-            SetTemporaryStatusMessage("Enter the danger zone first.", 3f);
+            SetTemporaryStatusMessage("Clear the danger zone before landing.", 3f);
             return;
         }
 
-        if (!threatCleared)
+        if (currentState != ExamState.ThreatCleared)
         {
-            SetTemporaryStatusMessage("Clear the threat before landing.", 3f);
+            SetTemporaryStatusMessage("Landing not allowed yet.", 3f);
             return;
         }
 
-        missionComplete = true;
-
+        SetState(ExamState.MissionComplete);
         SetStatusMessage("Mission Complete!");
-
-        if (missionText != null)
-            missionText.text = "Successful landing completed.";
     }
 }

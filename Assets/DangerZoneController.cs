@@ -1,3 +1,4 @@
+//DangerZoneController.cs
 using UnityEngine;
 using System.Collections;
 
@@ -12,9 +13,14 @@ public class DangerZoneController : MonoBehaviour
     private void OnTriggerEnter(Collider collision)
     {
         if (!collision.CompareTag("Player")) return;
-        Debug.Log("Player Entered danger zone");
 
-        examManager.EnterDangerZone();
+        if (!examManager.EnterDangerZone()) return;
+
+        if (activeCountdown != null)
+        {
+            StopCoroutine(activeCountdown);
+            activeCountdown = null;
+        }
 
         activeCountdown = StartCoroutine(MissileCountdown(collision.transform));
     }
@@ -22,7 +28,6 @@ public class DangerZoneController : MonoBehaviour
     private void OnTriggerExit(Collider collision)
     {
         if (!collision.CompareTag("Player")) return;
-        Debug.Log("Player exited danger zone");
 
         if (activeCountdown != null)
         {
@@ -36,9 +41,15 @@ public class DangerZoneController : MonoBehaviour
 
     private IEnumerator MissileCountdown(Transform target)
     {
-        Debug.Log("Missile countdown started");
         yield return new WaitForSeconds(missileDelay);
-        Debug.Log("countdown finished, launching now:)");
-        missileLauncher.Launch(target);
+        activeCountdown = null;
+
+        if (!examManager.CanLaunchMissile())
+            yield break;
+
+        GameObject missile = missileLauncher.Launch(target);
+
+        if (missile != null)
+            examManager.NotifyMissileLaunched();
     }
 }
