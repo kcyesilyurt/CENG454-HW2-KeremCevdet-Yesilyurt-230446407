@@ -1,9 +1,11 @@
+//AircraftThreatHandler.cs
 using UnityEngine;
 
 public class AircraftThreatHandler : MonoBehaviour
 {
     [SerializeField] private Transform respawnPoint;
     [SerializeField] private FlightExamManager examManager;
+    [SerializeField] private AudioSource hitAudioSource;
 
     private Rigidbody rb;
 
@@ -15,6 +17,11 @@ public class AircraftThreatHandler : MonoBehaviour
     private void OnTriggerEnter(Collider other)
     {
         if (!other.CompareTag("Missile")) return;
+
+        if (hitAudioSource != null)
+        {
+            hitAudioSource.Play();
+        }
 
         if (rb != null)
         {

@@ -17,6 +17,7 @@ public class FlightExamManager : MonoBehaviour
 
     [SerializeField] private TMP_Text statusText;
     [SerializeField] private TMP_Text missionText;
+    [SerializeField] private AudioSource successAudioSource;
 
     private ExamState currentState = ExamState.WaitingForTakeoff;
     private Coroutine statusRoutine;
@@ -192,6 +193,10 @@ public class FlightExamManager : MonoBehaviour
         {
             SetTemporaryStatusMessage("Landing not allowed yet.", 3f);
             return;
+        }
+        if(successAudioSource != null)
+        {
+            successAudioSource.Play();
         }
 
         SetState(ExamState.MissionComplete);
